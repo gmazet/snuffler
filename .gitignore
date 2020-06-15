@@ -121,3 +121,7 @@ gmt.history
 figures/
 OLD/
 SAVE/
+xml/
+snuffler_data/
+staline
+*.png
