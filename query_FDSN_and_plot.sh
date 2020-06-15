@@ -20,7 +20,7 @@ function myexitstatus {
 #exitstatus=$?
 #myexitstatus
 
-WS=$(whiptail --title "FDSN Webservice" --radiolist "Ex: RESIF, RASP" 20 78 4 "RESIF" "1" ON "RASP" "1" OFF "INGV" "1" OFF "IRIS" "1" OFF "GEOFON" "1" OFF 3>&1 1>&2 2>&3)
+WS=$(whiptail --title "FDSN Webservice" --radiolist "Ex: RESIF, RASP" 30 78 6 "RESIF" "1" ON "RASP" "1" OFF "INGV" "1" OFF "IRIS" "1" OFF "GEOFON" "1" OFF "LDG" "1" OFF 3>&1 1>&2 2>&3)
 exitstatus=$?
 myexitstatus
 
@@ -66,7 +66,15 @@ else
 					DEFAULTCHAN="BHZ"
 					DEFAULTLOCCODE=""
 				else
-					exit
+					if [ $WS = "LDG" ] ; then
+						URL_ROOT="http://vq-jallouvre:8080"
+						DEFAULTNET="RD"
+						DEFAULTSTA="BGF"
+						DEFAULTCHAN="SHZ"
+						DEFAULTLOCCODE=""
+					else
+						exit
+					fi
 				fi
 			fi
 		fi
@@ -147,32 +155,12 @@ done
 URL="$URL_ROOT/fdsnws/dataselect/1/query?network=$NET&station=$STA&location=$LOCCODE&channel=$CHAN&quality=B&starttime=$MINTIME&endtime=$MAXTIME&nodata=404"
 echo $URL
 
-echo "URL: "$URL > req.result
+#echo "URL: "$URL > /tmp/req.result
 REQ=$(whiptail --yesno "Lancer la requête ? $URL" 0 0 --title "URL" 3>&1 1>&2 2>&3)
 exitstatus=$?
 myexitstatus
-##whiptail --textbox ./req.result 12 80
 
+MINTIME=$(echo $MINTIME | sed 's/://g')
 curl -k $URL -o ./snuffler_data/$MINTIME.mseed
-
 snuffler --stations=./stations.txt ./snuffler_data/$MINTIME.mseed
-
-exit
-###
-
-
-
-python << EOF 
-from obspy import read
-file="./$STA.mseed"
-st = read(file)
-st.filter("bandpass", freqmin=$FREQMIN, freqmax=$FREQMAX)
-st.plot()
-EOF
-
-exit
-dt = st[0].stats.starttime
-st.plot( color='red', number_of_ticks=7,
-                   tick_rotation=5, tick_format='%I:%M %p',
-                   starttime=dt + 60*60, endtime=dt + 60*60 + 120)
 
